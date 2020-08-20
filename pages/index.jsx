@@ -1,91 +1,131 @@
 import React from 'react';
 import {
-  Form, Select, InputNumber, Switch, Slider, Button, DatePicker,
+  Card, Button,
+  Row, Col, Badge, Select, Empty, Spin,
 } from 'antd';
+import { GiftOutlined, LoadingOutlined } from '@ant-design/icons';
 
-const FormItem = Form.Item;
-const { Option } = Select;
+import superagent from 'superagent';
+import queryBuilder from '../queries/suggest';
+import InstanceOf from '../components/InstanceOf';
 
-const content = {
-  marginTop: '100px',
-};
+class Index extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      loading: false,
+      entities: [],
+      limit: 12,
+      instanceOf: 'Q515', // city ID
+    };
+    this.resultMapper = (rawData) => rawData.map((r) => {
+      const idParts = `${r.id.value}`.split('/');
+      return {
+        id: idParts[idParts.length - 1],
+        name: r.name.value,
+        description: `${r.description.value}`.charAt(0).toUpperCase() + `${r.description.value}`.slice(1),
+        image: r.image.value,
+        linkCount: r.linkCount.value,
+        wikipediaUrl: `https://en.wikipedia.org/wiki/${r.name.value}`,
+      };
+    });
+    this.limitChanged = (limit) => {
+      this.setState({ limit });
+    };
+    this.subjectChanged = (v) => {
+      if (v) {
+        this.setState({ instanceOf: v.value });
+      }
+    };
+    this.fetchClicked = () => {
+      this.fetchData();
+    };
+    this.fetchData = () => {
+      this.setState({ loading: true, entities: [] });
+      const { instanceOf, limit } = this.state;
+      superagent.get('https://query.wikidata.org/sparql')
+        .query({
+          query: queryBuilder(instanceOf, limit),
+          format: 'json',
+        })
+        .end((err, info) => {
+          this.setState({ loading: false });
+          if (!err) {
+            const { body } = info;
+            this.setState({
+              entities: this.resultMapper(body.results.bindings),
+            });
+          }
+        });
+    };
+  }
 
-export default function Home() {
-  return (
-    <div style={content}>
-      <div>
-        <Form layout="horizontal">
-          <FormItem
-            label="Input Number"
-            labelCol={{ span: 8 }}
-            wrapperCol={{ span: 8 }}
-          >
-            <InputNumber
-              size="large"
-              min={1}
-              max={10}
-              style={{ width: 100 }}
-              defaultValue={3}
-              name="inputNumber"
-            />
-          </FormItem>
+  componentDidMount() {
+    this.fetchData();
+  }
 
-          <FormItem
-            label="Switch"
-            labelCol={{ span: 8 }}
-            wrapperCol={{ span: 8 }}
-          >
-            <Switch defaultChecked name="switch" />
-          </FormItem>
-
-          <FormItem
-            label="Slider"
-            labelCol={{ span: 8 }}
-            wrapperCol={{ span: 8 }}
-          >
-            <Slider defaultValue={70} />
-          </FormItem>
-
-          <FormItem
-            label="Select"
-            labelCol={{ span: 8 }}
-            wrapperCol={{ span: 8 }}
-          >
-            <Select
-              size="large"
-              defaultValue="lucy"
-              style={{ width: 192 }}
-              name="select"
-            >
-              <Option value="jack">jack</Option>
-              <Option value="lucy">lucy</Option>
-              <Option value="disabled" disabled>
-                disabled
-              </Option>
-              <Option value="yiminghe">yiminghe</Option>
+  render() {
+    const { loading, entities, limit } = this.state;
+    return (
+      <>
+        <Row justify="center" gutter={(10, 10)} style={{ marginBottom: 20 }}>
+          <Col offset={3} span={8}>
+            <InstanceOf onChange={this.subjectChanged} />
+          </Col>
+          <Col span={2}>
+            <Select style={{ width: '100%' }} onChange={this.limitChanged} placeholder="Choose Result Limit" value={limit}>
+              <Select.Option value={12}>12</Select.Option>
+              <Select.Option value={20}>20</Select.Option>
+              <Select.Option value={40}>40</Select.Option>
+              <Select.Option value={50}>50</Select.Option>
+              <Select.Option value={100}>100</Select.Option>
+              {/* <Select.Option value={500}>500</Select.Option>
+              <Select.Option value={1000}>1000</Select.Option> */}
             </Select>
-          </FormItem>
-
-          <FormItem
-            label="DatePicker"
-            labelCol={{ span: 8 }}
-            wrapperCol={{ span: 8 }}
-          >
-            <DatePicker name="startDate" />
-          </FormItem>
-          <FormItem
-            style={{ marginTop: 48 }}
-            wrapperCol={{ span: 8, offset: 8 }}
-          >
-            <Button size="large" type="primary" htmlType="submit">
-              OK
-            </Button>
-            <Button size="large" style={{ marginLeft: 8 }}>
-              Cancel
-            </Button>
-          </FormItem>
-        </Form>
-      </div>
-    </div>
-  );
+          </Col>
+          <Col span={4}>
+            <Button icon={<GiftOutlined />} loading={loading} onClick={this.fetchClicked} type="primary">Suggest</Button>
+          </Col>
+        </Row>
+        <Row gutter={(10)} justify="center" align="middle">
+          {
+            entities.map((e) => (
+              <Col span={6} style={{ paddingBottom: 10 }}>
+                <a href={e.wikipediaUrl} target="_blank" rel="noreferrer">
+                  <Card
+                    style={{ width: '100%' }}
+                    cover={(
+                      <div style={{ height: 200, backgroundImage: `url(${e.image})`, backgroundSize: 'cover' }} />
+                  )}
+                  >
+                    <Card.Meta
+                      title={(
+                        <>
+                          {e.name}
+                          {' '}
+                          <Badge count={e.linkCount} overflowCount={2000} />
+                        </>
+                      )}
+                      description={`${e.description}`.substr(0, 300)}
+                    />
+                  </Card>
+                </a>
+              </Col>
+            ))
+          }
+          {
+           loading ? (
+             <Col span={24} style={{ textAlign: 'center' }}>
+               <Spin indicator={<LoadingOutlined style={{ fontSize: 30 }} spin />} />
+             </Col>
+           ) : null
+          }
+          {
+            entities.length === 0 && !loading ? <Empty /> : null
+          }
+        </Row>
+      </>
+    );
+  }
 }
+export default Index;
