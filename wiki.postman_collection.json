@@ -1,0 +1,40 @@
+{
+	"info": {
+		"_postman_id": "b5273369-b56f-4e5e-b752-0b5520b1ee79",
+		"name": "wiki",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "wikidata",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://query.wikidata.org/sparql?query=%23 TOP 1000 missing articles about cities by site link count\n\n%23 We use `as` to add an alias (change the name of the variable)\nSELECT (?e as ?id) ?name ?linkCount ?image ?description WHERE {\n  %23 The entity is a city\n  ?e wdt:P31 wd:Q515 ;\n     wdt:P18 ?image ;\n     \n     \n  %23 Get number of links (wikipedia languages)\n  wikibase:sitelinks ?linkCount.\n  \n  ?e schema:description ?description.\n  FILTER ( lang(?description) = \"en\" )\n  \n  %23 Don't inclue the entities that ❌\n  MINUS {\n    %23 Have articles on sorani wikipedia\n    ?article schema:about ?e;\n    schema:isPartOf <https://ckb.wikipedia.org/>.\n  }\n  \n  %23 Get label for the entity\n  ?e rdfs:label ?name.\n  \n  %23 Only get the english label\n  FILTER((LANG(?name)) = \"en\")\n  \n  FILTER(?linkCount >= 25) %23 Should have at least 25 links\n}\nGROUP BY ?e ?name ?linkCount ?image ?description\nORDER BY DESC (?linkCount) %23 Sort by number of links, from highest to lowest\nLIMIT 100 %23 Only get top 1000&format=json",
+					"protocol": "https",
+					"host": [
+						"query",
+						"wikidata",
+						"org"
+					],
+					"path": [
+						"sparql"
+					],
+					"query": [
+						{
+							"key": "query",
+							"value": "# TOP 1000 missing articles about cities by site link count\n\n# We use `as` to add an alias (change the name of the variable)\nSELECT (?e as ?id) ?name ?linkCount ?image ?description WHERE {\n  # The entity is a city\n  ?e wdt:P31 wd:Q515 ;\n     wdt:P18 ?image ;\n     \n     \n  # Get number of links (wikipedia languages)\n  wikibase:sitelinks ?linkCount.\n  \n  ?e schema:description ?description.\n  FILTER ( lang(?description) = \"en\" )\n  \n  # Don't inclue the entities that ❌\n  MINUS {\n    # Have articles on sorani wikipedia\n    ?article schema:about ?e;\n    schema:isPartOf <https://ckb.wikipedia.org/>.\n  }\n  \n  # Get label for the entity\n  ?e rdfs:label ?name.\n  \n  # Only get the english label\n  FILTER((LANG(?name)) = \"en\")\n  \n  FILTER(?linkCount >= 25) # Should have at least 25 links\n}\nGROUP BY ?e ?name ?linkCount ?image ?description\nORDER BY DESC (?linkCount) # Sort by number of links, from highest to lowest\nLIMIT 100 # Only get top 1000"
+						},
+						{
+							"key": "format",
+							"value": "json"
+						}
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"protocolProfileBehavior": {}
+}
