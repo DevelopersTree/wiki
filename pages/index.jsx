@@ -108,15 +108,15 @@ class Index extends React.Component {
     return (
       <>
         <Row justify="center" gutter={[10, 10, 10, 10]} style={{ marginBottom: 20 }}>
-          <Col xl={3} md={3} sm={24}>
+          <Col xl={3} md={3} sm={24} xs={24}>
             <a style={{ color: '#696969' }} alt="Github" href="https://github.com/DevelopersTree/wiki">
               <GithubOutlined style={{ fontSize: 30 }} />
             </a>
           </Col>
-          <Col xl={8} md={8} sm={24}>
+          <Col xl={8} md={8} sm={24} xs={24}>
             <InstanceOf onChange={this.subjectChanged} />
           </Col>
-          <Col xl={2} md={2} sm={24}>
+          <Col xl={2} md={2} sm={24} xs={24}>
             <Select style={{ width: '100%' }} onChange={this.limitChanged} placeholder="Choose Result Limit" value={limit}>
               <Select.Option value={12}>12</Select.Option>
               <Select.Option value={20}>20</Select.Option>
@@ -129,17 +129,17 @@ class Index extends React.Component {
               <Select.Option value={1000}>1000</Select.Option> */}
             </Select>
           </Col>
-          <Col xl={4} md={4} sm={24}>
+          <Col xl={4} md={4} sm={24} xs={24}>
             <Button block icon={<GiftOutlined />} loading={loading} onClick={this.fetchClicked} type="primary">Suggest</Button>
           </Col>
-          <Col xl={4} md={4} sm={24}>
+          <Col xl={4} md={4} sm={24} xs={24}>
             <Button block icon={<CloudDownloadOutlined />} loading={downloading} onClick={this.exportClicked} type="dashed">Download</Button>
           </Col>
         </Row>
         <Row gutter={[20, 20, 20, 20]} justify="center" align="middle">
           {
             entities.map((e) => (
-              <Col xl={6} md={12} sm={24} key={uniqid()}>
+              <Col xl={6} md={12} sm={24} xs={24} key={uniqid()}>
                 <a href={e.wikipediaUrl} target="_blank" rel="noreferrer" key={uniqid()}>
                   <Card
                     style={{ width: '100%' }}
