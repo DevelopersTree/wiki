@@ -16,13 +16,15 @@
     "babel-plugin-import": "1.13.0",
     "cross-env": "^7.0.2",
     "esm": "^3.2.25",
+    "json2csv": "^5.0.1",
     "lodash": "^4.17.20",
     "next": "latest",
     "next-on-netlify": "^2.3.2",
     "postcss-preset-env": "^6.7.0",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
-    "superagent": "^6.0.0"
+    "superagent": "^6.0.0",
+    "uniqid": "^5.2.0"
   },
   "browser": {
     "fs": false,

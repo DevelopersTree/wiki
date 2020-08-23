@@ -1,5 +1,5 @@
-export default (instanceOf = 'Q515', limit = 10, lang = 'ckb') => {
-  const query = `
+export default function query(instanceOf = 'Q515', limit = 10, lang = 'ckb') {
+  const q = `
     # TOP 100 missing articles about cities by site link count
 
     # We use 'as' to add an alias (change the name of the variable)
@@ -21,11 +21,7 @@ export default (instanceOf = 'Q515', limit = 10, lang = 'ckb') => {
         FILTER((LANG(?name)) = "en")
         
         # Don't inclue the entities that ❌
-        MINUS {
-            # Have articles on sorani wikipedia
-            ?article schema:about ?e;
-            schema:isPartOf <https://${lang}.wikipedia.org/>.
-        }
+        FILTER NOT EXISTS{ ?article schema:about ?e;schema:isPartOf <https://${lang}.wikipedia.org/>. } 
     
     
         FILTER(?linkCount >= 25) # Should have at least 25 links
@@ -34,5 +30,5 @@ export default (instanceOf = 'Q515', limit = 10, lang = 'ckb') => {
     ORDER BY DESC (?linkCount) # Sort by number of links, from highest to lowest
     LIMIT ${limit} # Only get top 100
 `;
-  return query;
-};
+  return q;
+}

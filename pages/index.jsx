@@ -3,7 +3,12 @@ import {
   Card, Button,
   Row, Col, Badge, Select, Empty, Spin,
 } from 'antd';
-import { GiftOutlined, LoadingOutlined } from '@ant-design/icons';
+import uniqid from 'uniqid';
+import { parse } from 'json2csv';
+import _ from 'lodash';
+import {
+  GiftOutlined, LoadingOutlined, CloudDownloadOutlined, GithubOutlined,
+} from '@ant-design/icons';
 
 import superagent from 'superagent';
 import queryBuilder from '../queries/suggest';
@@ -14,6 +19,7 @@ class Index extends React.Component {
     super(props);
     this.state = {
       loading: false,
+      downloading: false,
       entities: [],
       limit: 12,
       instanceOf: 'Q515', // city ID
@@ -38,10 +44,35 @@ class Index extends React.Component {
       }
     };
     this.fetchClicked = () => {
+      this.setState({ loading: true });
       this.fetchData();
     };
-    this.fetchData = () => {
-      this.setState({ loading: true, entities: [] });
+    this.downloadCsv = (csvString) => {
+      const blob = new Blob([csvString]);
+      if (window.navigator.msSaveOrOpenBlob) {
+        window.navigator.msSaveBlob(blob, 'filename.csv');
+      } else {
+        const a = window.document.createElement('a');
+
+        a.href = window.URL.createObjectURL(blob, {
+          type: 'text/plain',
+        });
+        a.download = 'export.csv';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      }
+    };
+    this.exportClicked = () => {
+      this.setState({ downloading: true });
+
+      this.fetchData((data) => {
+        this.setState({ downloading: false });
+        const csv = parse(data, _.keys(data));
+        this.downloadCsv(csv);
+      });
+    };
+    this.fetchData = (calback = undefined) => {
       const { instanceOf, limit } = this.state;
       superagent.get('https://query.wikidata.org/sparql')
         .query({
@@ -52,46 +83,64 @@ class Index extends React.Component {
           this.setState({ loading: false });
           if (!err) {
             const { body } = info;
-            this.setState({
-              entities: this.resultMapper(body.results.bindings),
-            });
+            if (!calback) {
+              this.setState({
+                entities: this.resultMapper(body.results.bindings),
+              });
+            } else {
+              calback(this.resultMapper(body.results.bindings));
+            }
           }
         });
     };
   }
 
   componentDidMount() {
+    this.setState({ loading: true });
+
     this.fetchData();
   }
 
   render() {
-    const { loading, entities, limit } = this.state;
+    const {
+      loading, entities, limit, downloading,
+    } = this.state;
     return (
       <>
-        <Row justify="center" gutter={(10, 10)} style={{ marginBottom: 20 }}>
-          <Col offset={3} span={8}>
+        <Row justify="center" gutter={[10, 10, 10, 10]} style={{ marginBottom: 20 }}>
+          <Col xl={3} md={3} sm={24}>
+            <a style={{ color: '#696969' }} alt="Github" href="https://github.com/DevelopersTree/wiki">
+              <GithubOutlined style={{ fontSize: 30 }} />
+            </a>
+          </Col>
+          <Col xl={8} md={8} sm={24}>
             <InstanceOf onChange={this.subjectChanged} />
           </Col>
-          <Col span={2}>
+          <Col xl={2} md={2} sm={24}>
             <Select style={{ width: '100%' }} onChange={this.limitChanged} placeholder="Choose Result Limit" value={limit}>
               <Select.Option value={12}>12</Select.Option>
               <Select.Option value={20}>20</Select.Option>
               <Select.Option value={40}>40</Select.Option>
               <Select.Option value={50}>50</Select.Option>
               <Select.Option value={100}>100</Select.Option>
+              <Select.Option value={100} style={{ color: 'red' }}>500</Select.Option>
+              <Select.Option value={100} style={{ color: 'red' }}>1000</Select.Option>
               {/* <Select.Option value={500}>500</Select.Option>
               <Select.Option value={1000}>1000</Select.Option> */}
             </Select>
           </Col>
-          <Col span={4}>
-            <Button icon={<GiftOutlined />} loading={loading} onClick={this.fetchClicked} type="primary">Suggest</Button>
+          <Col xl={4} md={4} sm={24}>
+            <Button block icon={<GiftOutlined />} loading={loading} onClick={this.fetchClicked} type="primary">Suggest</Button>
+          </Col>
+          <Col xl={4} md={4} sm={24}>
+            <Button block icon={<CloudDownloadOutlined />} loading={downloading} onClick={this.exportClicked} type="dashed">Download</Button>
           </Col>
         </Row>
-        <Row gutter={(10)} justify="center" align="middle">
+        <Row gutter={[20, 20, 20, 20]} justify="center" align="middle">
           {
             entities.map((e) => (
-              <Col span={6} style={{ paddingBottom: 10 }}>
-                <a href={e.wikipediaUrl} target="_blank" rel="noreferrer">
+              <Col xl={6} md={12} sm={24} key={uniqid()}>
+                <a href={e.wikipediaUrl} target="_blank" rel="noreferrer" key={uniqid()}>
                   <Card
                     style={{ width: '100%' }}
                     cover={(

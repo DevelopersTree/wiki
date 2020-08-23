@@ -20,6 +20,12 @@ export default function CustomLayout(props) {
           `,
         }}
         />
+        <title>Wikipedia Helper Tools</title>
+        <meta charset="UTF-8" />
+        <meta name="description" content="With this tool will give you suggestions for missing wikipedia articles" />
+        <meta name="keywords" content="wiki, wikipedia, devs.krd, devs-krd, devstree" />
+        <meta name="author" content="Developers Tree" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       </Head>
       <Layout style={{ minHeight: '700px' }}>
         {/* <Header>Header</Header> */}
